@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Xcode user state
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Xcode build products
+DerivedData/
+build/
+Build/
+*.hmap
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.app
+
+# Swift Package Manager local state
+.build/
+.swiftpm/configuration/
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Local environment
+.env
+.env.*
+!.env.example
