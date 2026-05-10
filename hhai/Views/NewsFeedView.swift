@@ -7,15 +7,33 @@ struct NewsFeedView: View {
     @State private var isShowingSettings = false
 
     var body: some View {
-        Group {
+        ScrollView {
             if viewModel.isLoading && viewModel.items.isEmpty {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.items.isEmpty {
                 EmptyStateView()
             } else {
-                timelineFeed
+                NewsTimelineView(
+                    items: viewModel.items,
+                    isLoadingNext: viewModel.isLoadingNext,
+                    hasNext: viewModel.hasNext,
+                    onTap: { item in
+                        if item.hasCachedArticleMarkdown {
+                            selectedItem = item
+                        } else if let url = URL(string: item.url) {
+                            safariURL = url
+                        }
+                    },
+                    onLoadMore: {
+                        Task { await viewModel.loadNextPage() }
+                    }
+                )
+                .padding(.horizontal, DesignSystem.Spacing.lg)
             }
+        }
+        .refreshable {
+            await viewModel.refresh()
         }
         .navigationTitle("AI 热点")
         .navigationBarTitleDisplayMode(.inline)
@@ -54,29 +72,6 @@ struct NewsFeedView: View {
         }
     }
 
-    private var timelineFeed: some View {
-        ScrollView {
-            NewsTimelineView(
-                items: viewModel.items,
-                isLoadingNext: viewModel.isLoadingNext,
-                hasNext: viewModel.hasNext,
-                onTap: { item in
-                    if item.hasCachedArticleMarkdown {
-                        selectedItem = item
-                    } else if let url = URL(string: item.url) {
-                        safariURL = url
-                    }
-                },
-                onLoadMore: {
-                    Task { await viewModel.loadNextPage() }
-                }
-            )
-            .padding(.horizontal, DesignSystem.Spacing.lg)
-        }
-        .refreshable {
-            await viewModel.refresh()
-        }
-    }
 }
 
 extension URL: @retroactive Identifiable {
