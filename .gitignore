@@ -36,3 +36,4 @@ playground.xcworkspace
 .env
 .env.*
 !.env.example
+.claude/settings.*

@@ -34,7 +34,7 @@ final class APIClient {
         self.session = URLSession(configuration: config)
     }
 
-    func fetchItems(cursor: String? = nil, take: Int = 50) async throws -> ItemListResponse? {
+    func fetchItems(cursor: String? = nil, take: Int = 50, retryCount: Int = 0, maxRetries: Int = 3) async throws -> ItemListResponse? {
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
         var queryItems = [
             URLQueryItem(name: "mode", value: "selected"),
@@ -78,17 +78,33 @@ final class APIClient {
                 return nil
 
             case 503:
+                guard retryCount < maxRetries else {
+                    throw APIError.httpError(503)
+                }
                 try await Task.sleep(for: .seconds(1))
-                return try await fetchItems(cursor: cursor, take: take)
+                return try await fetchItems(cursor: cursor, take: take, retryCount: retryCount + 1, maxRetries: maxRetries)
 
             default:
                 throw APIError.httpError(httpResponse.statusCode)
             }
+        } catch is CancellationError {
+            #if DEBUG
+            print("[API] fetchItems 已取消")
+            #endif
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            #if DEBUG
+            print("[API] fetchItems 已取消")
+            #endif
+            throw CancellationError()
         } catch let error as APIError {
+            print("[API] fetchItems 失败: \(error.localizedDescription)")
             throw error
         } catch let error as DecodingError {
+            print("[API] fetchItems 失败: 解码错误 - \(error)")
             throw APIError.decodingError(error)
         } catch {
+            print("[API] fetchItems 失败: \(error)")
             throw APIError.networkUnavailable
         }
     }

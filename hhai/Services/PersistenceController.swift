@@ -51,24 +51,6 @@ final class PersistenceController {
         return (try? context.fetch(descriptor)) ?? []
     }
 
-    func itemsNeedingArticleCache(from dtos: [NewsItemDTO]) -> [NewsItem] {
-        let context = container.mainContext
-        let ids = dtos.map(\.id)
-        let descriptor = FetchDescriptor<NewsItem>(
-            predicate: #Predicate<NewsItem> { ids.contains($0.id) },
-            sortBy: [SortDescriptor(\.publishedAt, order: .reverse)]
-        )
-        let items = (try? context.fetch(descriptor)) ?? []
-        let itemMap = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
-
-        return dtos.compactMap { dto in
-            guard let item = itemMap[dto.id] else { return nil }
-            guard item.articleMarkdown?.isEmpty != false else { return nil }
-            guard item.articleCacheStatus != .loading else { return nil }
-            return item
-        }
-    }
-
     func markArticleCacheLoading(for itemID: String) {
         guard let item = item(withID: itemID) else { return }
         item.markArticleCacheLoading()
